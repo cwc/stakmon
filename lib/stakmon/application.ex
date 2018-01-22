@@ -4,12 +4,24 @@ defmodule Stakmon.Application do
   @moduledoc false
 
   use Application
+  use Statix, runtime_config: true
 
   def start(_type, _args) do
-    # List all child processes to be supervised
+    # Configure metrics connection at runtime
+    host = System.get_env("STATSD_HOST") || "localhost"
+    port = (System.get_env("STATSD_PORT") || "8125") |> Integer.parse |> elem(0)
+
+    Application.put_env(:statix, :host, host)
+    Application.put_env(:statix, :port, port)
+    Application.put_env(:statix, :prefix,  "stakmon")
+
+    {:ok, _} = Application.ensure_all_started(:statix)
+    :ok = connect()
+
     children = [
-      # Starts a worker by calling: Stakmon.Worker.start_link(arg)
-      # {Stakmon.Worker, arg},
+      %{id: Stakmon.StakWatcher.Supervisor,
+        start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Stakmon.StakWatcher.Supervisor]]}
+      }
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
