@@ -47,6 +47,8 @@ defmodule Stakmon.StakWatcher do
   end
 
   def handle_info({:stak_report, stak_report}, state) do
+	Stakmon.Application.gauge("hashrate.total.10s", stak_report["hashrate"]["total"] |> Enum.at(0), tags: ["hostname:#{state.hostname}:#{state.port}"])
+	Stakmon.Application.gauge("hashrate.total.60s", stak_report["hashrate"]["total"] |> Enum.at(1), tags: ["hostname:#{state.hostname}:#{state.port}"])
 	Stakmon.Application.gauge("hashrate.total.15m", stak_report["hashrate"]["total"] |> Enum.at(2), tags: ["hostname:#{state.hostname}:#{state.port}"])
 
 	{:noreply, state}
