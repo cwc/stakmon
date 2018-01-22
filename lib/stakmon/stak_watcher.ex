@@ -53,4 +53,5 @@ defmodule Stakmon.StakWatcher do
 
 	{:noreply, state}
   end
+  def handle_info(_, state), do: {:noreply, state}
 end
