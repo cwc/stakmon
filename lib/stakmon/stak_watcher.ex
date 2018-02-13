@@ -3,7 +3,7 @@ defmodule Stakmon.StakWatcher do
 
   require Logger
 
-  @default_poll_interval_ms 1000
+  @default_poll_interval_ms 5000
 
   def start_link(hostname, port, opts \\ []) do
     GenServer.start_link(__MODULE__, [hostname, port, opts], opts)
@@ -17,7 +17,7 @@ defmodule Stakmon.StakWatcher do
       poll_interval: poll_interval
     }
 
-    poll(hostname, port, poll_interval)
+    Process.send_after(self(), :poll, 0)
 
     {:ok, state}
   end
@@ -47,9 +47,9 @@ defmodule Stakmon.StakWatcher do
   end
 
   def handle_info({:stak_report, stak_report}, state) do
-	Stakmon.Application.gauge("hashrate.total.10s", stak_report["hashrate"]["total"] |> Enum.at(0), tags: ["hostname:#{state.hostname}:#{state.port}"])
-	Stakmon.Application.gauge("hashrate.total.60s", stak_report["hashrate"]["total"] |> Enum.at(1), tags: ["hostname:#{state.hostname}:#{state.port}"])
-	Stakmon.Application.gauge("hashrate.total.15m", stak_report["hashrate"]["total"] |> Enum.at(2), tags: ["hostname:#{state.hostname}:#{state.port}"])
+	Stakmon.Application.gauge("hashrate.total.10s", stak_report["hashrate"]["total"] |> Enum.at(0), tags: ["pool:#{stak_report["connection"]["pool"]}", "hostname:#{state.hostname}:#{state.port}"])
+	Stakmon.Application.gauge("hashrate.total.60s", stak_report["hashrate"]["total"] |> Enum.at(1), tags: ["pool:#{stak_report["connection"]["pool"]}", "hostname:#{state.hostname}:#{state.port}"])
+	Stakmon.Application.gauge("hashrate.total.15m", stak_report["hashrate"]["total"] |> Enum.at(2), tags: ["pool:#{stak_report["connection"]["pool"]}", "hostname:#{state.hostname}:#{state.port}"])
 
 	{:noreply, state}
   end
