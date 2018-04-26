@@ -13,7 +13,7 @@ defmodule Stakmon.Application do
 
     Application.put_env(:statix, :host, host)
     Application.put_env(:statix, :port, port)
-    Application.put_env(:statix, :prefix,  "stakmon")
+    Application.put_env(:statix, :prefix, "stakmon")
 
     {:ok, _} = Application.ensure_all_started(:statix)
     :ok = connect()
@@ -21,6 +21,9 @@ defmodule Stakmon.Application do
     children = [
       %{id: Stakmon.StakWatcher.Supervisor,
         start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Stakmon.StakWatcher.Supervisor]]}
+      },
+      %{id: Stakmon.HwinfoWatcher.Supervisor,
+        start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Stakmon.HwinfoWatcher.Supervisor]]}
       }
     ]
 
