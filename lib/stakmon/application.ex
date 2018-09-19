@@ -18,6 +18,7 @@ defmodule Stakmon.Application do
     {:ok, _} = Application.ensure_all_started(:statix)
     :ok = connect()
 
+    # Start supervision tree
     children = [
       %{id: Stakmon.StakWatcher.Supervisor,
         start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Stakmon.StakWatcher.Supervisor]]}
@@ -27,9 +28,17 @@ defmodule Stakmon.Application do
       }
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Stakmon.Supervisor]
-    Supervisor.start_link(children, opts)
+    {:ok, pid} = Supervisor.start_link(children, opts)
+
+    # Load config
+    {config, _} = Code.eval_string(File.read!("config.json"))
+    if config[:stakwatchers] do
+      Enum.each(config.stakwatchers, fn {host, port} ->
+        Stakmon.start_stak_watcher(host, port)
+      end)
+    end
+
+    {:ok, pid}
   end
 end
