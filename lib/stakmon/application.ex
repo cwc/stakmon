@@ -25,7 +25,10 @@ defmodule Stakmon.Application do
       },
       %{id: Stakmon.HwinfoWatcher.Supervisor,
         start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Stakmon.HwinfoWatcher.Supervisor]]}
-      }
+      },
+      %{id: Stakmon.TplinkSmartplugmon.Supervisor,
+        start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Stakmon.TplinkSmartplugmon.Supervisor]]}
+      },
     ]
 
     opts = [strategy: :one_for_one, name: Stakmon.Supervisor]
@@ -33,12 +36,24 @@ defmodule Stakmon.Application do
 
     # Load config
     {config, _} = Code.eval_string(File.read!("config.json"))
-    if config[:stakwatchers] do
-      Enum.each(config.stakwatchers, fn {host, port} ->
+    Application.put_env(:stakmon, :config, config)
+
+    init_from_config(config)
+
+    {:ok, pid}
+  end
+
+  def init_from_config(config) do
+    if config[:stak_watchers] do
+      Enum.each(config.stak_watchers, fn {host, port} ->
         Stakmon.start_stak_watcher(host, port)
       end)
     end
 
-    {:ok, pid}
+    if config[:tplink_smartplug_dir] do
+      Enum.each(config.tplink_smartplug_watchers, fn host ->
+        TplinkSmartplugmon.start_watcher(host, config.tplink_smartplug_dir)
+      end)
+    end
   end
 end
