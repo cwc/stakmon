@@ -24,31 +24,41 @@ defmodule TplinkSmartplugmon.PlugWatcher do
   end
 
   def handle_info(:poll, state) do
-    poll(state.host, state.app_dir, state.poll_interval)
+    try do
+      poll(state.host, state.app_dir)
+    catch
+      err_ex, err ->
+        Logger.error("#{err_ex}: #{err}")
+    end
+
+    Process.send_after(self(), :poll, state.poll_interval)
 
     {:noreply, state}
   end
 
-  defp poll(host, app_dir, poll_interval) do
-
+  defp poll({host, port}, app_dir) do
+    poll(host, app_dir, port)
+  end
+  defp poll(host, app_dir, port \\ 9999) do
+    port = Integer.to_string(port)
     today = Date.utc_today
 
     # Get plug info
-    {output, 0} = System.cmd("#{app_dir}/tplink_smartplug.py", ["-t", host, "-c", "info"])
+    {output, 0} = System.cmd("#{app_dir}/tplink_smartplug.py", ["-t", host, "-c", "info", "-p", port])
     [_, info] = String.split(output, "Received:", trim: true)
 
     info = Poison.decode!(info)
     plug_id = info["system"]["get_sysinfo"]["alias"]
 
     # Get usage data
-    {output, 0} = System.cmd("#{app_dir}/tplink_smartplug.py", ["-t", host, "-c", "energy"])
+    {output, 0} = System.cmd("#{app_dir}/tplink_smartplug.py", ["-t", host, "-c", "energy", "-p", port])
     # Sent:      {"emeter":{"get_realtime":{}}}
     # Received:  {"emeter":{"get_realtime":{"current":3.548681,"voltage":122.102035,"power":417.532206,"total":17.696000,"err_code":0}}}
     
     [_, result] = String.split(output, "Received:", trim: true)
     realtime = Poison.decode!(result)
 
-    {output, 0} = System.cmd("#{app_dir}/tplink_smartplug.py", ["-t", host, "-j", ~s({"emeter":{"get_monthstat":{"year":#{today.year}}}})])
+    {output, 0} = System.cmd("#{app_dir}/tplink_smartplug.py", ["-t", host, "-j", ~s({"emeter":{"get_monthstat":{"year":#{today.year}}}}), "-p", port])
     # Sent:      {"emeter":{"get_monthstat":{"year":2018}}}
     # Received:  {"emeter":{"get_monthstat":{"month_list":[{"year":2018,"month":10,"energy":0.021000}],"err_code":0}}}
 
@@ -58,8 +68,6 @@ defmodule TplinkSmartplugmon.PlugWatcher do
     # Send usage metrics
     Map.merge(realtime["emeter"], monthstat["emeter"])
     |> post_report(plug_id)
-
-    Process.send_after(self(), :poll, poll_interval)
   end
 
   defp post_report(report, plug_id) do
