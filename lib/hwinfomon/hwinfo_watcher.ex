@@ -55,14 +55,14 @@ defmodule Hwinfomon.HwinfoWatcher do
           name = sensor["SensorName"]
           value = sensor["SensorValue"]
 
-          if String.contains?(name, "GPU Thermal Diode"), do: Stakmon.Application.gauge("gpu.temp", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}:#{state.port}"])
-          if String.contains?(name, "HBM Temp"), do: Stakmon.Application.gauge("gpu.hbm.temp", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}:#{state.port}"])
-          if String.contains?(name, "GPU Clock"), do: Stakmon.Application.gauge("gpu.clock", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}:#{state.port}"])
-          if String.contains?(name, "GPU Memory Clock"), do: Stakmon.Application.gauge("gpu.memory.clock", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}:#{state.port}"])
-          if String.contains?(name, "GPU SoC Clock"), do: Stakmon.Application.gauge("gpu.soc.clock", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}:#{state.port}"])
-          if String.contains?(name, "GPU Core Voltage"), do: Stakmon.Application.gauge("gpu.voltage", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}:#{state.port}"])
-          if String.contains?(name, "GPU Memory Voltage"), do: Stakmon.Application.gauge("gpu.memory.voltage", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}:#{state.port}"])
-          if name == "GPU Fan", do: Stakmon.Application.gauge("gpu.fan.rpm", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}:#{state.port}"])
+          if String.contains?(name, "GPU Thermal Diode"), do: Stakmon.Application.gauge("gpu.temp", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}"])
+          if String.contains?(name, "HBM Temp"), do: Stakmon.Application.gauge("gpu.hbm.temp", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}"])
+          if String.contains?(name, "GPU Clock"), do: Stakmon.Application.gauge("gpu.clock", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}"])
+          if String.contains?(name, "GPU Memory Clock"), do: Stakmon.Application.gauge("gpu.memory.clock", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}"])
+          if String.contains?(name, "GPU SoC Clock"), do: Stakmon.Application.gauge("gpu.soc.clock", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}"])
+          if String.contains?(name, "GPU Core Voltage"), do: Stakmon.Application.gauge("gpu.voltage", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}"])
+          if String.contains?(name, "GPU Memory Voltage"), do: Stakmon.Application.gauge("gpu.memory.voltage", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}"])
+          if name == "GPU Fan", do: Stakmon.Application.gauge("gpu.fan.rpm", value, tags: ["gpu:#{gpu}", "hostname:#{state.hostname}"])
       end
     end)
 

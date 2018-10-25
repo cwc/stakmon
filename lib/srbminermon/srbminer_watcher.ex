@@ -41,11 +41,11 @@ defmodule Srbminermon.SrbminerWatcher do
   def handle_info(_, state), do: {:noreply, state}
 
   def post_report(api_results, state) do
-	Stakmon.Application.gauge("hashrate.total.10s", api_results["hashrate_total_now"], tags: ["pool:#{api_results["pool"]["pool"]}", "hostname:#{state.hostname}:#{state.port}"])
-	Stakmon.Application.gauge("hashrate.total.60s", api_results["hashrate_total_1min"], tags: ["pool:#{api_results["pool"]["pool"]}", "hostname:#{state.hostname}:#{state.port}"])
+	Stakmon.Application.gauge("hashrate.total.10s", api_results["hashrate_total_now"], tags: ["pool:#{api_results["pool"]["pool"]}", "hostname:#{state.hostname}"])
+	Stakmon.Application.gauge("hashrate.total.60s", api_results["hashrate_total_1min"], tags: ["pool:#{api_results["pool"]["pool"]}", "hostname:#{state.hostname}"])
 
-	Stakmon.Application.gauge("shares.good", api_results["shares"]["accepted"], tags: ["pool:#{api_results["pool"]["pool"]}", "hostname:#{state.hostname}:#{state.port}"])
-	Stakmon.Application.gauge("shares.total", api_results["shares"]["total"], tags: ["pool:#{api_results["pool"]["pool"]}", "hostname:#{state.hostname}:#{state.port}"])
+	Stakmon.Application.gauge("shares.good", api_results["shares"]["accepted"], tags: ["pool:#{api_results["pool"]["pool"]}", "hostname:#{state.hostname}"])
+	Stakmon.Application.gauge("shares.total", api_results["shares"]["total"], tags: ["pool:#{api_results["pool"]["pool"]}", "hostname:#{state.hostname}"])
 
 	{:noreply, state}
   end

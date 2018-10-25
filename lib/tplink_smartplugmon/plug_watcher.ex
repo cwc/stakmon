@@ -73,14 +73,14 @@ defmodule TplinkSmartplugmon.PlugWatcher do
   defp post_report(report, plug_id) do
     realtime = report["get_realtime"]
 
-    Stakmon.Application.gauge("smartplug.current.amps", realtime["current"], tags: ["plug_id:#{plug_id}"])
-    Stakmon.Application.gauge("smartplug.power.watts", realtime["power"], tags: ["plug_id:#{plug_id}"])
-    Stakmon.Application.gauge("smartplug.total_usage", realtime["total"], tags: ["plug_id:#{plug_id}"])
+    Stakmon.Application.gauge("smartplug.current.amps", realtime["current"], tags: ["hostname:#{plug_id}"])
+    Stakmon.Application.gauge("smartplug.power.watts", realtime["power"], tags: ["hostname:#{plug_id}"])
+    Stakmon.Application.gauge("smartplug.total_usage", realtime["total"], tags: ["hostname:#{plug_id}"])
 
     month_list = report["get_monthstat"]["month_list"]
 
     Enum.each(month_list, fn month ->
-      Stakmon.Application.gauge("smartplug.monthly_usage.kwh", month["energy"], tags: ["plug_id:#{plug_id}", "year:#{month["year"]}", "month:#{month["month"]}"])
+      Stakmon.Application.gauge("smartplug.monthly_usage.kwh", month["energy"], tags: ["hostname:#{plug_id}", "year:#{month["year"]}", "month:#{month["month"]}"])
     end)
   end
 end
