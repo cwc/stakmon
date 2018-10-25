@@ -23,6 +23,9 @@ defmodule Stakmon.Application do
       %{id: Stakmon.StakWatcher.Supervisor,
         start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Stakmon.StakWatcher.Supervisor]]}
       },
+      %{id: Srbminermon.SrbminerWatcher.Supervisor,
+        start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Srbminermon.SrbminerWatcher.Supervisor]]}
+      },
       %{id: Stakmon.HwinfoWatcher.Supervisor,
         start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Stakmon.HwinfoWatcher.Supervisor]]}
       },
@@ -47,6 +50,12 @@ defmodule Stakmon.Application do
     if config[:stak_watchers] do
       Enum.each(config.stak_watchers, fn {host, port} ->
         Stakmon.start_stak_watcher(host, port)
+      end)
+    end
+
+    if config[:srbminer_watchers] do
+      Enum.each(config.srbminer_watchers, fn {host, port} ->
+        Srbminermon.start_watcher(host, port)
       end)
     end
 
