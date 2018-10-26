@@ -11,10 +11,13 @@ defmodule Stakmon.StakWatcher do
 
   def init([hostname, port, opts]) do
     poll_interval = opts[:poll_interval] || @default_poll_interval_ms
+    statsd_tags = opts[:statsd_tags] || []
+
     state = %{
       hostname: hostname,
       port: port,
-      poll_interval: poll_interval
+      poll_interval: poll_interval,
+      statsd_tags: statsd_tags
     }
 
     Process.send_after(self(), :poll, 0)
@@ -47,12 +50,14 @@ defmodule Stakmon.StakWatcher do
   end
 
   def handle_info({:stak_report, stak_report}, state) do
-	Stakmon.Application.gauge("hashrate.total.10s", stak_report["hashrate"]["total"] |> Enum.at(0), tags: ["pool:#{stak_report["connection"]["pool"]}", "hostname:#{state.hostname}"])
-	Stakmon.Application.gauge("hashrate.total.60s", stak_report["hashrate"]["total"] |> Enum.at(1), tags: ["pool:#{stak_report["connection"]["pool"]}", "hostname:#{state.hostname}"])
-	Stakmon.Application.gauge("hashrate.total.15m", stak_report["hashrate"]["total"] |> Enum.at(2), tags: ["pool:#{stak_report["connection"]["pool"]}", "hostname:#{state.hostname}"])
+    base_tags = state.statsd_tags ++ ["pool:#{stak_report["connection"]["pool"]}", "hostname:#{state.hostname}"]
 
-	Stakmon.Application.gauge("shares.good", stak_report["results"]["shares_good"], tags: ["pool:#{stak_report["connection"]["pool"]}", "hostname:#{state.hostname}"])
-	Stakmon.Application.gauge("shares.total", stak_report["results"]["shares_total"], tags: ["pool:#{stak_report["connection"]["pool"]}", "hostname:#{state.hostname}"])
+	Stakmon.Application.gauge("hashrate.total.10s", stak_report["hashrate"]["total"] |> Enum.at(0), tags: base_tags)
+	Stakmon.Application.gauge("hashrate.total.60s", stak_report["hashrate"]["total"] |> Enum.at(1), tags: base_tags)
+	Stakmon.Application.gauge("hashrate.total.15m", stak_report["hashrate"]["total"] |> Enum.at(2), tags: base_tags)
+
+	Stakmon.Application.gauge("shares.good", stak_report["results"]["shares_good"], tags: base_tags)
+	Stakmon.Application.gauge("shares.total", stak_report["results"]["shares_total"], tags: base_tags)
 
 	{:noreply, state}
   end

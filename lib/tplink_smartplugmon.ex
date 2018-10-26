@@ -1,5 +1,10 @@
 defmodule TplinkSmartplugmon do
-  def start_watcher(host, monitor_app_dir, opts \\ []) do
+  require Logger
+
+  def start_watcher(monitor_app_dir, {host, port, opts}), do: start_watcher(monitor_app_dir, {host, port}, opts)
+  def start_watcher(monitor_app_dir, {host, opts}) when is_list(opts), do: start_watcher(monitor_app_dir, host, opts)
+  def start_watcher(monitor_app_dir, host, opts \\ []) do
+    Logger.info("Starting TP-Link plug watcher for #{inspect(host)}")
     Supervisor.start_child(Stakmon.TplinkSmartplugmon.Supervisor, %{
       id: host,
       start: {TplinkSmartplugmon.PlugWatcher, :start_link, [host, monitor_app_dir, opts]}
@@ -7,8 +12,8 @@ defmodule TplinkSmartplugmon do
   end
 
   def stop_watcher(host) do
-    :ok = Supervisor.terminate_child(Stakmon.TplinkSmartplugmon.Supervisor, "#{host}")
-    Supervisor.delete_child(Stakmon.TplinkSmartplugmon.Supervisor, "#{host}")
+    :ok = Supervisor.terminate_child(Stakmon.TplinkSmartplugmon.Supervisor, host)
+    Supervisor.delete_child(Stakmon.TplinkSmartplugmon.Supervisor, host)
   end
 
   def list_watchers do

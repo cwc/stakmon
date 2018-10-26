@@ -11,11 +11,13 @@ defmodule TplinkSmartplugmon.PlugWatcher do
 
   def init([host, monitor_app_dir, opts]) do
     poll_interval = opts[:poll_interval] || @default_poll_interval_ms
+    statsd_tags = opts[:statsd_tags] || []
 
     state = %{
       host: host,
       app_dir: monitor_app_dir,
-      poll_interval: poll_interval
+      poll_interval: poll_interval,
+      statsd_tags: statsd_tags
     }
 
     Process.send_after(self(), :poll, 0)
@@ -25,7 +27,7 @@ defmodule TplinkSmartplugmon.PlugWatcher do
 
   def handle_info(:poll, state) do
     try do
-      poll(state.host, state.app_dir)
+      poll(state.host, state.app_dir, state)
     catch
       err_ex, err ->
         Logger.error("#{err_ex}: #{err}")
@@ -36,10 +38,10 @@ defmodule TplinkSmartplugmon.PlugWatcher do
     {:noreply, state}
   end
 
-  defp poll({host, port}, app_dir) do
-    poll(host, app_dir, port)
+  defp poll({host, port}, app_dir, state) do
+    poll(host, app_dir, state, port)
   end
-  defp poll(host, app_dir, port \\ 9999) do
+  defp poll(host, app_dir, state, port \\ 9999) do
     port = Integer.to_string(port)
     today = Date.utc_today
 
@@ -67,20 +69,21 @@ defmodule TplinkSmartplugmon.PlugWatcher do
 
     # Send usage metrics
     Map.merge(realtime["emeter"], monthstat["emeter"])
-    |> post_report(plug_id)
+    |> post_report(plug_id, state)
   end
 
-  defp post_report(report, plug_id) do
+  defp post_report(report, plug_id, state) do
     realtime = report["get_realtime"]
+    base_tags = state.statsd_tags
 
-    Stakmon.Application.gauge("smartplug.current.amps", realtime["current"], tags: ["hostname:#{plug_id}"])
-    Stakmon.Application.gauge("smartplug.power.watts", realtime["power"], tags: ["hostname:#{plug_id}"])
-    Stakmon.Application.gauge("smartplug.total_usage", realtime["total"], tags: ["hostname:#{plug_id}"])
+    Stakmon.Application.gauge("smartplug.current.amps", realtime["current"], tags: base_tags ++ ["hostname:#{plug_id}"])
+    Stakmon.Application.gauge("smartplug.power.watts", realtime["power"], tags: base_tags ++ ["hostname:#{plug_id}"])
+    Stakmon.Application.gauge("smartplug.total_usage", realtime["total"], tags: base_tags ++ ["hostname:#{plug_id}"])
 
     month_list = report["get_monthstat"]["month_list"]
 
     Enum.each(month_list, fn month ->
-      Stakmon.Application.gauge("smartplug.monthly_usage.kwh", month["energy"], tags: ["hostname:#{plug_id}", "year:#{month["year"]}", "month:#{month["month"]}"])
+      Stakmon.Application.gauge("smartplug.monthly_usage.kwh", month["energy"], tags: base_tags ++ ["hostname:#{plug_id}", "year:#{month["year"]}", "month:#{month["month"]}"])
     end)
   end
 end
