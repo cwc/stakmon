@@ -30,7 +30,7 @@ defmodule TplinkSmartplugmon.PlugWatcher do
       poll(state.host, state.app_dir, state)
     catch
       err_ex, err ->
-        Logger.error("#{err_ex}: #{err}")
+        Logger.error("#{inspect(err_ex)}: #{inspect(err)}")
     end
 
     Process.send_after(self(), :poll, state.poll_interval)
