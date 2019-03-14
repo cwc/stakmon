@@ -17,20 +17,13 @@ defmodule Srbminermon.SrbminerWatcher do
       hostname: hostname,
       port: port,
       poll_interval: poll_interval,
-      statsd_tags: statsd_tags
+      statsd_tags: statsd_tags,
+      rigwatcher_pid: opts[:rigwatcher_pid],
     }
 
     Process.send_after(self(), :poll, 0)
 
     {:ok, state}
-  end
-
-  defp poll(state, hostname, port) do
-    case HTTPotion.get("http://#{hostname}:#{port}") do
-      %{status_code: 200, body: body} -> body |> Poison.decode! |> post_report(state)
-
-      resp -> Logger.error("Response from #{hostname}:#{port}: #{inspect resp}")
-    end
   end
 
   def handle_info(:poll, state) do
@@ -42,6 +35,22 @@ defmodule Srbminermon.SrbminerWatcher do
   end
 
   def handle_info(_, state), do: {:noreply, state}
+
+  defp poll(state, hostname, port) do
+    case HTTPotion.get("http://#{hostname}:#{port}") do
+      %{status_code: 200, body: body} -> body |> Poison.decode! |> post_report(state)
+
+      resp ->
+        Logger.error("Response from #{hostname}:#{port}: #{inspect resp}")
+        poll_error(state)
+    end
+  end
+
+  def poll_error(state) do
+    if state.rigwatcher_pid do
+      Rigmon.miner_poll_error(state.rigwatcher_pid)
+    end
+  end
 
   def post_report(api_results, state) do
     base_tags = state.statsd_tags ++ ["pool:#{api_results["pool"]["pool"]}", "hostname:#{state.hostname}"]

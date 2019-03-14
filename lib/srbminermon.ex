@@ -3,6 +3,7 @@ defmodule Srbminermon do
 
   def start_watcher({hostname, port}), do: start_watcher(hostname, port)
   def start_watcher({hostname, port, opts}), do: start_watcher(hostname, port, opts)
+  def start_watcher({hostname, port, opts}, rigwatcher_pid), do: start_watcher(hostname, port, Keyword.put(opts, :rigwatcher_pid, rigwatcher_pid))
   def start_watcher(hostname, port, opts \\ []) do
     Logger.info("Starting SrbminerWatcher for #{hostname}:#{port}")
     Supervisor.start_child(Srbminermon.SrbminerWatcher.Supervisor, %{

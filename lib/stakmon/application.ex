@@ -22,15 +22,22 @@ defmodule Stakmon.Application do
 
     # Start supervision tree
     children = [
+      %{id: Rigmon.Supervisor,
+        start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Rigmon.Supervisor]]}
+      },
+
       %{id: Stakmon.StakWatcher.Supervisor,
         start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Stakmon.StakWatcher.Supervisor]]}
       },
+
       %{id: Srbminermon.SrbminerWatcher.Supervisor,
         start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Srbminermon.SrbminerWatcher.Supervisor]]}
       },
+
       %{id: Stakmon.HwinfoWatcher.Supervisor,
         start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Stakmon.HwinfoWatcher.Supervisor]]}
       },
+
       %{id: Stakmon.TplinkSmartplugmon.Supervisor,
         start: {Supervisor, :start_link, [[], [strategy: :one_for_one, name: Stakmon.TplinkSmartplugmon.Supervisor]]}
       },
@@ -49,25 +56,9 @@ defmodule Stakmon.Application do
   end
 
   def init_from_config(config) do
-    if config[:stak_watchers] do
-      Enum.each(config.stak_watchers, fn watcher ->
-        Stakmon.start_stak_watcher(watcher)
-        |> inspect
-        |> Logger.info
-      end)
-    end
-
-    if config[:srbminer_watchers] do
-      Enum.each(config.srbminer_watchers, fn watcher ->
-        Srbminermon.start_watcher(watcher)
-        |> inspect
-        |> Logger.info
-      end)
-    end
-
-    if config[:tplink_smartplug_dir] do
-      Enum.each(config.tplink_smartplug_watchers, fn watcher->
-        TplinkSmartplugmon.start_watcher(config.tplink_smartplug_dir, watcher)
+    if config[:rig_watchers] do
+      Enum.each(config.rig_watchers, fn watcher ->
+        Rigmon.start_rig_watcher(watcher)
         |> inspect
         |> Logger.info
       end)

@@ -22,4 +22,12 @@ defmodule TplinkSmartplugmon do
       elem(w, 0)
     end)
   end
+
+  def power_off(pid) do
+    GenServer.cast(pid, :power_off)
+  end
+
+  def power_on(pid) do
+    GenServer.cast(pid, :power_on)
+  end
 end
