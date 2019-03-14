@@ -3,7 +3,7 @@ defmodule Rigmon.RigWatcher do
 
   require Logger
 
-  @reset_threshold_s 90
+  @reset_threshold_s 120
 
   def start_link(rig_spec) do
     GenServer.start_link(__MODULE__, rig_spec)
@@ -47,6 +47,7 @@ defmodule Rigmon.RigWatcher do
       Logger.info(~s(Poll error for #{state.rig_id}: resetting rig))
 
       Kernel.apply(state.plug_mod, :power_off, [state.plug_pid])
+      Process.sleep(100)
       Kernel.apply(state.plug_mod, :power_on, [state.plug_pid])
 
       {:noreply, Map.put(state, :last_reset, now)}
