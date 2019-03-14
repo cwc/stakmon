@@ -13,13 +13,19 @@ defmodule Rigmon.RigWatcher do
     Logger.info("Monitoring rig #{rig_id}")
 
     {miner_mod, start_args} = miner_spec
-    {:ok, miner_pid} = Kernel.apply(miner_mod, :start_watcher, [start_args, self()])
+    miner_pid = case Kernel.apply(miner_mod, :start_watcher, [start_args, self()]) do
+      {:ok, pid} -> pid
+      {:error, {:already_started, pid}} -> pid
+    end
 
     miner_pid |> inspect
     |> Logger.debug
 
     config = Application.get_env(:stakmon, :config)
-    {:ok, plug_pid} = TplinkSmartplugmon.start_watcher(config.tplink_smartplug_dir, plug_spec)
+    plug_pid = case TplinkSmartplugmon.start_watcher(config.tplink_smartplug_dir, plug_spec) do
+      {:ok, pid} -> pid
+      {:error, {:already_started, pid}} -> pid
+    end
 
     plug_pid |> inspect
     |> Logger.debug
@@ -49,4 +55,3 @@ defmodule Rigmon.RigWatcher do
     end
   end
 end
-
